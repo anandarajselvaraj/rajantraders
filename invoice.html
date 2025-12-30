@@ -86,15 +86,24 @@ input,textarea,select{border:none}
 
 <!-- Controls -->
 <div class="controls">
-  <button onclick="addRow()">➕ Add Row</button>
-  <button onclick="saveInvoice()">💾 Save</button>
-  <button onclick="loadInvoice()">🔄 Load Last</button>
+  <!-- Record management & export buttons first -->
+  <button onclick="markDelete()">🗑 Mark/Unmark Delete</button>
+  <button onclick="deleteMarked()">❌ Delete Marked</button>
+  <button onclick="downloadPDF()">📄 PDF</button>
+  <button onclick="exportExcel()">📊 Excel</button>
+
+    <!-- History dropdown -->
   <select id="history" onchange="loadHistory(this.value)">
     <option value="">Load from History</option>
   </select>
-  <button onclick="downloadPDF()">📄 PDF</button>
-  <button onclick="exportExcel()">📊 Excel</button>
+  
+  <!-- Row/table operations after -->
+  <button onclick="addRow()">➕ Add Row</button>
+  <button onclick="saveInvoice()">💾 Save</button>
+  <button onclick="loadInvoice()">🔄 Load Last</button>
+
 </div>
+
 
 <!-- Table -->
 <div class="table-wrap">
@@ -187,16 +196,31 @@ document.addEventListener("keydown",e=>{
   }
 })
 
-// Save invoice
+// Save invoice with customer + timestamp
 function saveInvoice(){
-  const name=prompt("Enter invoice name/date","Invoice-"+Date.now())
-  if(!name) return
+  if(!customer.value){
+    alert("Enter customer name")
+    return
+  }
+  const now=new Date()
+  const dd=String(now.getDate()).padStart(2,'0')
+  const mmm=now.toLocaleString('en-us',{month:'short'})
+  const yy=String(now.getFullYear()).slice(-2)
+  const hh=String(now.getHours()).padStart(2,'0')
+  const mm=String(now.getMinutes()).padStart(2,'0')
+  const ss=String(now.getSeconds()).padStart(2,'0')
+  const timestamp=`${dd}-${mmm}-${yy}-${hh}:${mm}:${ss}`
+  const name=`${customer.value}-${timestamp}`
+
   let data={customer:customer.value,date:invDate.value,credit:credit.value,
-            rows:[...tbody.children].map(r=>({p:r.cells[2].firstChild.value,q:r.querySelector(".qty").value,r:r.querySelector(".rate").value,u:r.querySelector("select").value}))}
+            rows:[...tbody.children].map(r=>({p:r.cells[2].firstChild.value,q:r.querySelector(".qty").value,r:r.querySelector(".rate").value,u:r.querySelector("select").value})),
+            deleted:false}
+
   let history=JSON.parse(localStorage.getItem("history")||"{}")
   history[name]=data
   localStorage.setItem("history",JSON.stringify(history))
-  alert("Saved"); loadHistoryOptions()
+  alert("Saved: "+name)
+  loadHistoryOptions()
 }
 
 // Load last invoice
@@ -219,18 +243,44 @@ function loadHistory(key){
   calc()
 }
 
-// Populate history dropdown
+// Populate history dropdown with deleted mark
 function loadHistoryOptions(){
   let sel=document.getElementById("history")
   sel.innerHTML='<option value="">Load from History</option>'
   let history=JSON.parse(localStorage.getItem("history")||"{}")
   Object.keys(history).forEach(k=>{
     let opt=document.createElement("option")
-    opt.value=k; opt.textContent=k
+    opt.value=k
+    opt.textContent=history[k].deleted ? `${k} ❌` : k
     sel.appendChild(opt)
   })
 }
 loadHistoryOptions()
+
+// Mark / unmark record for deletion
+function markDelete(){
+  let sel=document.getElementById("history")
+  let key=sel.value
+  if(!key) return alert("Select record to mark/unmark")
+  let history=JSON.parse(localStorage.getItem("history")||"{}")
+  if(history[key]){
+    history[key].deleted = !history[key].deleted
+    localStorage.setItem("history",JSON.stringify(history))
+    alert(history[key].deleted ? "Marked for deletion" : "Unmarked")
+    loadHistoryOptions()
+  }
+}
+
+// Permanently delete all marked records
+function deleteMarked(){
+  let history=JSON.parse(localStorage.getItem("history")||"{}")
+  Object.keys(history).forEach(k=>{
+    if(history[k].deleted) delete history[k]
+  })
+  localStorage.setItem("history",JSON.stringify(history))
+  alert("Deleted marked records")
+  loadHistoryOptions()
+}
 
 // PDF
 function downloadPDF(){
