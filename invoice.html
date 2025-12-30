@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Professional Invoice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f8;padding:10px}
+
+/* SCALE INVOICE 20% SMALLER */
+.invoice-wrapper {
+    transform: scale(0.8);
+    transform-origin: top left;
+    width: 125%; /* compensate shrink */
+}
+
+.invoice{max-width:1100px;margin:auto;background:#fff;padding:15px}
+.header{display:flex;align-items:center;gap:15px;border-bottom:1px solid #999;padding-bottom:10px}
+.logo img{width:70px}
+.company{text-align:center;flex:1}
+
+/* TABLE */
+.table-wrap{max-height:340px;overflow:auto;border:1px solid #999;margin-top:10px}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}
+thead th{position:sticky;top:0;background:#eee;z-index:1;border:1px solid #999}
+th,td{border:1px solid #999;padding:4px;vertical-align:middle;text-align:center}
+input,select,textarea{width:100%;box-sizing:border-box;border:1px solid #999;padding:6px;font-size:14px}
+input{height:32px;text-align:center}
+textarea{min-height:48px;resize:vertical;line-height:1.4;text-align:left}
+input[readonly]{background:#f1f1f1}
+
+/* COLUMN WIDTHS */
+th:nth-child(1),td:nth-child(1){width:30px} /* delete */
+th:nth-child(2),td:nth-child(2){width:35px} /* serial */
+th:nth-child(3),td:nth-child(3){width:auto} /* particulars */
+th:nth-child(4),td:nth-child(4){width:60px} /* qty */
+th:nth-child(5),td:nth-child(5){width:60px} /* unit */
+th:nth-child(6),td:nth-child(6){width:75px} /* rate */
+th:nth-child(7),td:nth-child(7){width:85px} /* total */
+.del-btn{padding:2px 5px;font-size:12px;line-height:1;cursor:pointer}
+
+/* CONTROLS */
+.controls{text-align:center;margin:10px 0}
+button{padding:5px 8px;margin:3px}
+
+/* SUMMARY ALIGNMENT */
+.summary{max-width:360px;margin-left:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.summary div{display:flex;justify-content:space-between;align-items:center}
+.summary span{flex:1;text-align:right;font-weight:bold;padding-right:8px}
+.summary input{width:120px;text-align:right}
+
+/* PRINT */
+@media print{
+.controls{display:none}
+.table-wrap{max-height:none;overflow:visible}
+input,textarea,select{border:none}
+}
+</style>
+</head>
+
+<body>
+
+<div class="invoice-wrapper">
+<div class="invoice" id="invoice">
+
+<!-- Header -->
+<div class="header">
+  <div class="logo"><img src="logo.png"></div>
+  <div class="company">
+    <h2>Your Company Name</h2>
+    <p>Address • Phone</p>
+    <input id="customer" placeholder="Customer Name">
+  </div>
+  <div>
+    <strong>Date</strong><br>
+    <input type="date" id="invDate">
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button onclick="addRow()">➕ Add Row</button>
+  <button onclick="saveInvoice()">💾 Save</button>
+  <button onclick="loadInvoice()">🔄 Load Last</button>
+  <select id="history" onchange="loadHistory(this.value)">
+    <option value="">Load from History</option>
+  </select>
+  <button onclick="downloadPDF()">📄 PDF</button>
+  <button onclick="exportExcel()">📊 Excel</button>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>❌</th>
+<th>Sl</th>
+<th>Particulars</th>
+<th>Qty</th>
+<th>Unit</th>
+<th>Rate</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<!-- Summary -->
+<div class="summary">
+<div><span>Sub Total</span><input id="sub" readonly></div>
+<div><span>Tax %</span><input id="tax" value="18" oninput="calc()"></div>
+<div><span>Tax Amt</span><input id="taxAmt" readonly></div>
+<div><span>Grand Total</span><input id="grand" readonly></div>
+<div><span>Credit</span><input id="credit" oninput="calcBal()"></div>
+<div><span>Debit</span><input id="debit" readonly></div>
+</div>
+
+</div>
+</div>
+
+<script>
+const tbody=document.getElementById("tbody")
+invDate.value=new Date().toISOString().split("T")[0]
+
+// Add row
+function addRow(data={}){
+  const tr=document.createElement("tr")
+  tr.innerHTML=`
+    <td><button class="del-btn" onclick="delRow(this)">✖</button></td>
+    <td class="sl"></td>
+    <td><textarea>${data.p||""}</textarea></td>
+    <td><input class="qty" value="${data.q||""}" oninput="calc()"></td>
+    <td><select>
+      <option>LTR</option>
+      <option>KG</option>
+    </select></td>
+    <td><input class="rate" value="${data.r||""}" oninput="calc()"></td>
+    <td><input class="total" readonly></td>`
+  tbody.appendChild(tr)
+  renumber()
+}
+
+// Delete row
+function delRow(btn){ btn.closest("tr").remove(); renumber() }
+
+// Renumber serials
+function renumber(){ tbody.querySelectorAll(".sl").forEach((e,i)=>e.textContent=i+1); calc() }
+
+// Calculate totals
+function calc(){
+  let s=0
+  tbody.querySelectorAll("tr").forEach(r=>{
+    let q=r.querySelector(".qty").value||0
+    let rt=r.querySelector(".rate").value||0
+    let t=q*rt
+    r.querySelector(".total").value=t.toFixed(2)
+    s+=t
+  })
+  sub.value=s.toFixed(2)
+  taxAmt.value=(s*(tax.value||0)/100).toFixed(2)
+  grand.value=(+sub.value + +taxAmt.value).toFixed(2)
+  calcBal()
+}
+
+// Debit calculation
+function calcBal(){
+  let d=grand.value-(credit.value||0)
+  debit.value=d>0?d.toFixed(2):"0.00"
+}
+
+// Keyboard navigation
+document.addEventListener("keydown",e=>{
+  if(!["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName))return
+  if(e.key==="Enter"){e.preventDefault()
+    const inputs=[...document.querySelectorAll("input,textarea,select")].filter(i=>!i.readOnly)
+    const i=inputs.indexOf(e.target)
+    if(inputs[i+1])inputs[i+1].focus()
+  }
+})
+
+// Save invoice
+function saveInvoice(){
+  const name=prompt("Enter invoice name/date","Invoice-"+Date.now())
+  if(!name) return
+  let data={customer:customer.value,date:invDate.value,credit:credit.value,
+            rows:[...tbody.children].map(r=>({p:r.cells[2].firstChild.value,q:r.querySelector(".qty").value,r:r.querySelector(".rate").value,u:r.querySelector("select").value}))}
+  let history=JSON.parse(localStorage.getItem("history")||"{}")
+  history[name]=data
+  localStorage.setItem("history",JSON.stringify(history))
+  alert("Saved"); loadHistoryOptions()
+}
+
+// Load last invoice
+function loadInvoice(){
+  let history=JSON.parse(localStorage.getItem("history")||"{}")
+  let keys=Object.keys(history)
+  if(keys.length>0) loadHistory(keys[keys.length-1])
+}
+
+// Load invoice from history
+function loadHistory(key){
+  if(!key) return
+  let history=JSON.parse(localStorage.getItem("history")||"{}")
+  let d=history[key]; if(!d) return
+  customer.value=d.customer
+  invDate.value=d.date
+  credit.value=d.credit
+  tbody.innerHTML=""
+  d.rows.forEach(r=>addRow(r))
+  calc()
+}
+
+// Populate history dropdown
+function loadHistoryOptions(){
+  let sel=document.getElementById("history")
+  sel.innerHTML='<option value="">Load from History</option>'
+  let history=JSON.parse(localStorage.getItem("history")||"{}")
+  Object.keys(history).forEach(k=>{
+    let opt=document.createElement("option")
+    opt.value=k; opt.textContent=k
+    sel.appendChild(opt)
+  })
+}
+loadHistoryOptions()
+
+// PDF
+function downloadPDF(){
+  html2canvas(invoice).then(c=>{
+    const pdf=new jspdf.jsPDF("p","mm","a4")
+    let w=190,h=c.height*w/c.width
+    pdf.addImage(c.toDataURL(),"PNG",10,10,w,h)
+    pdf.save("invoice.pdf")
+  })
+}
+
+// Excel Export
+function exportExcel(){
+  let wb=XLSX.utils.book_new()
+  let ws_data=[["Sl","Particulars","Qty","Unit","Rate","Total"]]
+  tbody.querySelectorAll("tr").forEach(r=>{
+    ws_data.push([r.querySelector(".sl").textContent,r.cells[2].firstChild.value,r.querySelector(".qty").value,r.querySelector("select").value,r.querySelector(".rate").value,r.querySelector(".total").value])
+  })
+  ws_data.push([])
+  ws_data.push(["Sub Total",sub.value])
+  ws_data.push(["Tax %",tax.value])
+  ws_data.push(["Tax Amount",taxAmt.value])
+  ws_data.push(["Grand Total",grand.value])
+  ws_data.push(["Credit",credit.value])
+  ws_data.push(["Debit",debit.value])
+  let ws=XLSX.utils.aoa_to_sheet(ws_data)
+  XLSX.utils.book_append_sheet(wb,ws,"Invoice")
+  XLSX.writeFile(wb,"invoice.xlsx")
+}
+
+// Drag & drop rows
+new Sortable(tbody,{animation:150,onEnd:renumber})
+
+// Initial row
+addRow()
+</script>
+
+</body>
+</html>
