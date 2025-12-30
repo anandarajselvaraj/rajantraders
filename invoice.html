@@ -14,54 +14,98 @@
 <style>
 body{font-family:Arial,sans-serif;background:#f4f6f8;padding:10px}
 
-/* SCALE INVOICE 20% SMALLER */
-.invoice-wrapper {
-    transform: scale(0.8);
-    transform-origin: top left;
-    width: 125%; /* compensate shrink */
+/* SCALE */
+.invoice-wrapper{
+    transform:scale(0.8);
+    transform-origin:top left;
+    width:125%;
 }
 
 .invoice{max-width:1100px;margin:auto;background:#fff;padding:15px}
-.header{display:flex;align-items:center;gap:15px;border-bottom:1px solid #999;padding-bottom:10px}
+
+/* HEADER */
+.header{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    border-bottom:1px solid #999;
+    padding-bottom:8px;
+}
 .logo img{width:70px}
 .company{text-align:center;flex:1}
 
+/* HISTORY */
+.history-row{
+    text-align:right;
+    margin:8px 0;
+}
+
+/* CONTROLS */
+.controls{
+    text-align:center;
+    margin:8px 0;
+}
+button{padding:5px 8px;margin:3px}
+
+/* CUSTOMER + DATE */
+.cust-date{
+    display:flex;
+    gap:15px;
+    margin:10px 0;
+}
+.cust-date div{flex:1}
+.cust-date label{
+    font-weight:bold;
+    font-size:13px;
+    display:block;
+    margin-bottom:3px;
+}
+
 /* TABLE */
-.table-wrap{max-height:340px;overflow:auto;border:1px solid #999;margin-top:10px}
+.table-wrap{max-height:340px;overflow:auto;border:1px solid #999}
 table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}
-thead th{position:sticky;top:0;background:#eee;z-index:1;border:1px solid #999}
-th,td{border:1px solid #999;padding:4px;vertical-align:middle;text-align:center}
-input,select,textarea{width:100%;box-sizing:border-box;border:1px solid #999;padding:6px;font-size:14px}
-input{height:32px;text-align:center}
-textarea{min-height:48px;resize:vertical;line-height:1.4;text-align:left}
+th,td{border:1px solid #999;padding:4px;text-align:center}
+thead th{position:sticky;top:0;background:#eee}
+input,select,textarea{
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid #999;
+    padding:6px;
+    font-size:14px;
+}
+textarea{min-height:35px;resize:vertical;text-align:left}
 input[readonly]{background:#f1f1f1}
 
 /* COLUMN WIDTHS */
-th:nth-child(1),td:nth-child(1){width:30px} /* delete */
-th:nth-child(2),td:nth-child(2){width:35px} /* serial */
-th:nth-child(3),td:nth-child(3){width:auto} /* particulars */
-th:nth-child(4),td:nth-child(4){width:60px} /* qty */
-th:nth-child(5),td:nth-child(5){width:60px} /* unit */
-th:nth-child(6),td:nth-child(6){width:75px} /* rate */
-th:nth-child(7),td:nth-child(7){width:85px} /* total */
-.del-btn{padding:2px 5px;font-size:12px;line-height:1;cursor:pointer}
+th:nth-child(1),td:nth-child(1){width:30px}
+th:nth-child(2),td:nth-child(2){width:35px}
+th:nth-child(4),td:nth-child(4){width:60px}
+th:nth-child(5),td:nth-child(5){width:60px}
+th:nth-child(6),td:nth-child(6){width:75px}
+th:nth-child(7),td:nth-child(7){width:85px}
+.del-btn{font-size:12px;padding:2px 5px}
 
-/* CONTROLS */
-.controls{text-align:center;margin:10px 0}
-button{padding:5px 8px;margin:3px}
-
-/* SUMMARY ALIGNMENT */
-.summary{max-width:360px;margin-left:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px}
-.summary div{display:flex;justify-content:space-between;align-items:center}
-.summary span{flex:1;text-align:right;font-weight:bold;padding-right:8px}
-.summary input{width:120px;text-align:right}
-
-/* PRINT */
-@media print{
-.controls{display:none}
-.table-wrap{max-height:none;overflow:visible}
-input,textarea,select{border:none}
+/* SUMMARY */
+.summary{
+    max-width:360px;
+    margin-left:auto;
+    margin-top:10px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
 }
+.summary div{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.summary span{
+    flex:1;
+    text-align:right;
+    font-weight:bold;
+    padding-right:8px;
+}
+.summary input{width:120px;text-align:right}
 </style>
 </head>
 
@@ -70,60 +114,60 @@ input,textarea,select{border:none}
 <div class="invoice-wrapper">
 <div class="invoice" id="invoice">
 
-<!-- Header -->
+<!-- HEADER -->
 <div class="header">
-  <div class="logo"><img src="classicPetroliumImg.png"></div>
+  <div class="logo"><img src="logo.png"></div>
   <div class="company">
     <h2>Classic Petroleum</h2>
     <p>98, Radio Park East Street, Dadagapatty Gate, Salem-636006, Tamil Nadu, India</p>
+  </div>
+</div>
+
+<!-- HISTORY ABOVE BUTTONS -->
+<div class="history-row">
+  <select id="history" onchange="loadHistory(this.value)">
+    <option value="">Load from History</option>
+  </select>
+</div>
+
+<!-- BUTTONS -->
+<div class="controls">
+  <button onclick="addRow()">➕ Add Row</button>
+  <button onclick="saveInvoice()">💾 Save</button>
+  <button onclick="loadInvoice()">🔄 Load Last</button>
+  <button onclick="downloadPDF()">📄 PDF</button>
+  <button onclick="markDelete()">🗑 Mark/Unmark Delete</button>
+  <button onclick="deleteMarked()">❌ Delete Marked</button>
+  <button onclick="exportExcel()">📊 Excel</button>
+</div>
+
+
+<!-- CUSTOMER + DATE BELOW BUTTONS -->
+<div class="cust-date">
+  <div>
+    <label>Customer Name</label>
     <input id="customer" placeholder="Customer Name">
   </div>
   <div>
-    <strong>Date</strong><br>
+    <label>Date</label>
     <input type="date" id="invDate">
   </div>
 </div>
 
-<!-- Controls -->
-<div class="controls">
-  <!-- Record management & export buttons first -->
-  <button onclick="markDelete()">🗑 Mark/Unmark Delete</button>
-  <button onclick="deleteMarked()">❌ Delete Marked</button>
-  <button onclick="downloadPDF()">📄 PDF</button>
-  <button onclick="exportExcel()">📊 Excel</button>
-
-    <!-- History dropdown -->
-  <select id="history" onchange="loadHistory(this.value)">
-    <option value="">Load from History</option>
-  </select>
-
-  <!-- Row/table operations after -->
-  <button onclick="addRow()">➕ Add Row</button>
-  <button onclick="saveInvoice()">💾 Save</button>
-  <button onclick="loadInvoice()">🔄 Load Last</button>
-
-</div>
-
-
-<!-- Table -->
+<!-- TABLE -->
 <div class="table-wrap">
 <table>
 <thead>
 <tr>
-<th>❌</th>
-<th>S#</th>
-<th>Particulars</th>
-<th>Qty</th>
-<th>Unit</th>
-<th>Rate</th>
-<th>Total</th>
+<th>❌</th><th>S#</th><th>Particulars</th>
+<th>Qty</th><th>Unit</th><th>Rate</th><th>Total</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
-<!-- Summary -->
+<!-- SUMMARY -->
 <div class="summary">
 <div><span>Sub Total</span><input id="sub" readonly></div>
 <div><span>Tax %</span><input id="tax" value="18" oninput="calc()"></div>
@@ -138,183 +182,137 @@ input,textarea,select{border:none}
 
 <script>
 const tbody=document.getElementById("tbody")
+const customer = document.getElementById("customer");
+const invDate = document.getElementById("invDate");
+const credit = document.getElementById("credit");
+const debit = document.getElementById("debit");
+const sub = document.getElementById("sub");
+const tax = document.getElementById("tax");
+const taxAmt = document.getElementById("taxAmt");
+const grand = document.getElementById("grand");
+const history = document.getElementById("history");
 invDate.value=new Date().toISOString().split("T")[0]
 
-// Add row
-function addRow(data={}){
-  const tr=document.createElement("tr")
-  tr.innerHTML=`
-    <td><button class="del-btn" onclick="delRow(this)">✖</button></td>
-    <td class="sl"></td>
-    <td><textarea>${data.p||""}</textarea></td>
-    <td><input class="qty" value="${data.q||""}" oninput="calc()"></td>
-    <td><select>
-      <option>LTR</option>
-      <option>KG</option>
-    </select></td>
-    <td><input class="rate" value="${data.r||""}" oninput="calc()"></td>
-    <td><input class="total" readonly></td>`
-  tbody.appendChild(tr)
-  renumber()
+function addRow(d={}){
+ let tr=document.createElement("tr")
+ tr.innerHTML=`
+ <td><button class="del-btn" onclick="this.closest('tr').remove();renumber()">✖</button></td>
+ <td class="sl"></td>
+ <td><textarea>${d.p||""}</textarea></td>
+ <td><input class="qty" oninput="calc()" value="${d.q||""}"></td>
+ <td><select><option>LTR</option><option>KG</option></select></td>
+ <td><input class="rate" oninput="calc()" value="${d.r||""}"></td>
+ <td><input class="total" readonly></td>`
+ tbody.appendChild(tr); renumber()
 }
 
-// Delete row
-function delRow(btn){ btn.closest("tr").remove(); renumber() }
+function renumber(){
+ [...tbody.querySelectorAll(".sl")].forEach((e,i)=>e.textContent=i+1)
+ calc()
+}
 
-// Renumber serials
-function renumber(){ tbody.querySelectorAll(".sl").forEach((e,i)=>e.textContent=i+1); calc() }
-
-// Calculate totals
 function calc(){
-  let s=0
-  tbody.querySelectorAll("tr").forEach(r=>{
-    let q=r.querySelector(".qty").value||0
-    let rt=r.querySelector(".rate").value||0
-    let t=q*rt
-    r.querySelector(".total").value=t.toFixed(2)
-    s+=t
-  })
-  sub.value=s.toFixed(2)
-  taxAmt.value=(s*(tax.value||0)/100).toFixed(2)
-  grand.value=(+sub.value + +taxAmt.value).toFixed(2)
-  calcBal()
+ let s=0
+ tbody.querySelectorAll("tr").forEach(r=>{
+   let q=r.querySelector(".qty").value||0
+   let rt=r.querySelector(".rate").value||0
+   let t=q*rt
+   r.querySelector(".total").value=t.toFixed(2)
+   s+=t
+ })
+ sub.value=s.toFixed(2)
+ taxAmt.value=(s*(tax.value||0)/100).toFixed(2)
+ grand.value=(+sub.value + +taxAmt.value).toFixed(2)
+ calcBal()
 }
 
-// Debit calculation
 function calcBal(){
-  let d=grand.value-(credit.value||0)
-  debit.value=d>0?d.toFixed(2):"0.00"
+ let d=grand.value-(credit.value||0)
+ debit.value=d>0?d.toFixed(2):"0.00"
 }
 
-// Keyboard navigation
-document.addEventListener("keydown",e=>{
-  if(!["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName))return
-  if(e.key==="Enter"){e.preventDefault()
-    const inputs=[...document.querySelectorAll("input,textarea,select")].filter(i=>!i.readOnly)
-    const i=inputs.indexOf(e.target)
-    if(inputs[i+1])inputs[i+1].focus()
-  }
-})
-
-// Save invoice with customer + timestamp
+/* SAVE WITH CUSTOMER + TIMESTAMP */
 function saveInvoice(){
-  if(!customer.value){
-    alert("Enter customer name")
-    return
-  }
-  const now=new Date()
-  const dd=String(now.getDate()).padStart(2,'0')
-  const mmm=now.toLocaleString('en-us',{month:'short'})
-  const yy=String(now.getFullYear()).slice(-2)
-  const hh=String(now.getHours()).padStart(2,'0')
-  const mm=String(now.getMinutes()).padStart(2,'0')
-  const ss=String(now.getSeconds()).padStart(2,'0')
-  const timestamp=`${dd}-${mmm}-${yy}-${hh}:${mm}:${ss}`
-  const name=`${customer.value}-${timestamp}`
+ if(!customer.value) return alert("Enter customer name")
+ const n=new Date()
+ const ts=`${String(n.getDate()).padStart(2,'0')}-${n.toLocaleString('en',{month:'short'})}-${String(n.getFullYear()).slice(-2)}-${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`
+ const key=`${customer.value}-${ts}`
 
-  let data={customer:customer.value,date:invDate.value,credit:credit.value,
-            rows:[...tbody.children].map(r=>({p:r.cells[2].firstChild.value,q:r.querySelector(".qty").value,r:r.querySelector(".rate").value,u:r.querySelector("select").value})),
-            deleted:false}
+ let data={customer:customer.value,date:invDate.value,credit:credit.value,deleted:false,
+ rows:[...tbody.children].map(r=>({p:r.cells[2].firstChild.value,q:r.querySelector(".qty").value,r:r.querySelector(".rate").value}))}
 
-  let history=JSON.parse(localStorage.getItem("history")||"{}")
-  history[name]=data
-  localStorage.setItem("history",JSON.stringify(history))
-  alert("Saved: "+name)
-  loadHistoryOptions()
+ let h=JSON.parse(localStorage.getItem("history")||"{}")
+ h[key]=data
+ localStorage.setItem("history",JSON.stringify(h))
+ loadHistoryOptions()
 }
 
-// Load last invoice
+function loadHistory(k){
+ if(!k)return
+ let h=JSON.parse(localStorage.getItem("history"))
+ let d=h[k]
+ customer.value=d.customer
+ invDate.value=d.date
+ credit.value=d.credit
+ tbody.innerHTML=""
+ d.rows.forEach(r=>addRow(r))
+ calc()
+}
+
 function loadInvoice(){
-  let history=JSON.parse(localStorage.getItem("history")||"{}")
-  let keys=Object.keys(history)
-  if(keys.length>0) loadHistory(keys[keys.length-1])
+ let h=JSON.parse(localStorage.getItem("history")||"{}")
+ let k=Object.keys(h).pop()
+ if(k)loadHistory(k)
 }
 
-// Load invoice from history
-function loadHistory(key){
-  if(!key) return
-  let history=JSON.parse(localStorage.getItem("history")||"{}")
-  let d=history[key]; if(!d) return
-  customer.value=d.customer
-  invDate.value=d.date
-  credit.value=d.credit
-  tbody.innerHTML=""
-  d.rows.forEach(r=>addRow(r))
-  calc()
-}
-
-// Populate history dropdown with deleted mark
 function loadHistoryOptions(){
-  let sel=document.getElementById("history")
-  sel.innerHTML='<option value="">Load from History</option>'
-  let history=JSON.parse(localStorage.getItem("history")||"{}")
-  Object.keys(history).forEach(k=>{
-    let opt=document.createElement("option")
-    opt.value=k
-    opt.textContent=history[k].deleted ? `${k} ❌` : k
-    sel.appendChild(opt)
-  })
+ history.innerHTML='<option value="">Load from History</option>'
+ let h=JSON.parse(localStorage.getItem("history")||"{}")
+ Object.keys(h).forEach(k=>{
+   let o=document.createElement("option")
+   o.value=k
+   o.textContent=h[k].deleted?`${k} ❌`:k
+   history.appendChild(o)
+ })
 }
 loadHistoryOptions()
 
-// Mark / unmark record for deletion
 function markDelete(){
-  let sel=document.getElementById("history")
-  let key=sel.value
-  if(!key) return alert("Select record to mark/unmark")
-  let history=JSON.parse(localStorage.getItem("history")||"{}")
-  if(history[key]){
-    history[key].deleted = !history[key].deleted
-    localStorage.setItem("history",JSON.stringify(history))
-    alert(history[key].deleted ? "Marked for deletion" : "Unmarked")
-    loadHistoryOptions()
-  }
+ let k=history.value
+ if(!k)return
+ let h=JSON.parse(localStorage.getItem("history"))
+ h[k].deleted=!h[k].deleted
+ localStorage.setItem("history",JSON.stringify(h))
+ loadHistoryOptions()
 }
 
-// Permanently delete all marked records
 function deleteMarked(){
-  let history=JSON.parse(localStorage.getItem("history")||"{}")
-  Object.keys(history).forEach(k=>{
-    if(history[k].deleted) delete history[k]
-  })
-  localStorage.setItem("history",JSON.stringify(history))
-  alert("Deleted marked records")
-  loadHistoryOptions()
+ let h=JSON.parse(localStorage.getItem("history"))
+ Object.keys(h).forEach(k=>{if(h[k].deleted)delete h[k]})
+ localStorage.setItem("history",JSON.stringify(h))
+ loadHistoryOptions()
 }
 
-// PDF
 function downloadPDF(){
-  html2canvas(invoice).then(c=>{
-    const pdf=new jspdf.jsPDF("p","mm","a4")
-    let w=190,h=c.height*w/c.width
-    pdf.addImage(c.toDataURL(),"PNG",10,10,w,h)
-    pdf.save("invoice.pdf")
-  })
+ html2canvas(invoice).then(c=>{
+  const pdf=new jspdf.jsPDF("p","mm","a4")
+  pdf.addImage(c.toDataURL(),"PNG",10,10,190,c.height*190/c.width)
+  pdf.save("invoice.pdf")
+ })
 }
 
-// Excel Export
 function exportExcel(){
-  let wb=XLSX.utils.book_new()
-  let ws_data=[["Sl","Particulars","Qty","Unit","Rate","Total"]]
-  tbody.querySelectorAll("tr").forEach(r=>{
-    ws_data.push([r.querySelector(".sl").textContent,r.cells[2].firstChild.value,r.querySelector(".qty").value,r.querySelector("select").value,r.querySelector(".rate").value,r.querySelector(".total").value])
-  })
-  ws_data.push([])
-  ws_data.push(["Sub Total",sub.value])
-  ws_data.push(["Tax %",tax.value])
-  ws_data.push(["Tax Amount",taxAmt.value])
-  ws_data.push(["Grand Total",grand.value])
-  ws_data.push(["Credit",credit.value])
-  ws_data.push(["Debit",debit.value])
-  let ws=XLSX.utils.aoa_to_sheet(ws_data)
-  XLSX.utils.book_append_sheet(wb,ws,"Invoice")
-  XLSX.writeFile(wb,"invoice.xlsx")
+ let wb=XLSX.utils.book_new()
+ let data=[["Sl","Particulars","Qty","Rate","Total"]]
+ tbody.querySelectorAll("tr").forEach(r=>{
+   data.push([r.querySelector(".sl").textContent,r.cells[2].firstChild.value,r.querySelector(".qty").value,r.querySelector(".rate").value,r.querySelector(".total").value])
+ })
+ let ws=XLSX.utils.aoa_to_sheet(data)
+ XLSX.utils.book_append_sheet(wb,ws,"Invoice")
+ XLSX.writeFile(wb,"invoice.xlsx")
 }
 
-// Drag & drop rows
 new Sortable(tbody,{animation:150,onEnd:renumber})
-
-// Initial row
 addRow()
 </script>
 
